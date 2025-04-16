@@ -9,10 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
   Alert
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../App';
+import { RootStackParamList } from '../navigation/Router';
+import { useAuth } from '../contexts/AuthContext';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -21,6 +23,7 @@ type Props = {
 };
 
 const LoginScreen = ({ navigation }: Props) => {
+  const { login, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -53,15 +56,21 @@ const LoginScreen = ({ navigation }: Props) => {
     return true;
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
 
     if (isEmailValid && isPasswordValid) {
-      // In a real app, you would handle authentication here
-      // For demo purposes, we'll just navigate to Home
-      const username = email.split('@')[0];
-      navigation.navigate('Home', { username });
+      try {
+        const success = await login(email, password);
+
+        if (!success) {
+          Alert.alert('Login Failed', 'Invalid email or password');
+        }
+      } catch (error) {
+        Alert.alert('Login Error', 'An unexpected error occurred');
+        console.error(error);
+      }
     }
   };
 
@@ -118,8 +127,16 @@ const LoginScreen = ({ navigation }: Props) => {
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Login</Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.buttonText}>Login</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.registerContainer}>

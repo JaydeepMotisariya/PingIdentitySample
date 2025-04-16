@@ -9,10 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
   Alert
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../App';
+import { RootStackParamList } from '../navigation/Router';
+import { useAuth } from '../contexts/AuthContext';
 
 type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Register'>;
 
@@ -21,6 +23,7 @@ type Props = {
 };
 
 const RegisterScreen = ({ navigation }: Props) => {
+  const { register, isLoading } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -85,25 +88,38 @@ const RegisterScreen = ({ navigation }: Props) => {
     return true;
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     const isNameValid = validateName(name);
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
     const isConfirmPasswordValid = validateConfirmPassword(confirmPassword);
 
     if (isNameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid) {
-      // In a real app, you would register the user here
-      // For demo purposes, we'll just show an alert and navigate to Login
-      Alert.alert(
-        "Registration Successful",
-        "Your account has been created. Please login to continue.",
-        [
-          {
-            text: "OK",
-            onPress: () => navigation.navigate('Login')
-          }
-        ]
-      );
+      try {
+        const success = await register({
+          name,
+          email,
+          password
+        });
+
+        if (success) {
+          Alert.alert(
+            "Registration Successful",
+            "Your account has been created. Please login to continue.",
+            [
+              {
+                text: "OK",
+                onPress: () => navigation.navigate('Login')
+              }
+            ]
+          );
+        } else {
+          Alert.alert('Registration Failed', 'Failed to create account. Please try again.');
+        }
+      } catch (error) {
+        Alert.alert('Registration Error', 'An unexpected error occurred');
+        console.error(error);
+      }
     }
   };
 
@@ -186,8 +202,16 @@ const RegisterScreen = ({ navigation }: Props) => {
             {confirmPasswordError ? <Text style={styles.errorText}>{confirmPasswordError}</Text> : null}
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleRegister}>
-            <Text style={styles.buttonText}>Register</Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleRegister}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.buttonText}>Register</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.loginContainer}>

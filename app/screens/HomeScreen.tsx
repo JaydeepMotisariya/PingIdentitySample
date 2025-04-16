@@ -1,25 +1,21 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { RouteProp } from '@react-navigation/native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../App';
+import { RootStackParamList } from '../navigation/Router';
+import { useAuth } from '../contexts/AuthContext';
 
-type HomeScreenRouteProp = RouteProp<RootStackParamList, 'Home'>;
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
 type Props = {
-  route: HomeScreenRouteProp;
   navigation: HomeScreenNavigationProp;
 };
 
-const HomeScreen = ({ route, navigation }: Props) => {
-  const { username } = route.params;
+const HomeScreen = ({ navigation }: Props) => {
+  const { user, logout, isLoading } = useAuth();
+  const username = user?.name || user?.email?.split('@')[0] || 'User';
 
-  const handleLogout = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Login' }],
-    });
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
@@ -28,31 +24,16 @@ const HomeScreen = ({ route, navigation }: Props) => {
         <Text style={styles.welcomeText}>
           Welcome, <Text style={styles.username}>{username}</Text>!
         </Text>
-        <Text style={styles.description}>
-          You have successfully logged in to the application.
-        </Text>
+        <Text style={styles.subtitle}>Thanks for using our app.</Text>
 
-        <View style={styles.cardContainer}>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Your Account</Text>
-            <Text style={styles.cardText}>Manage your profile and settings</Text>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Notifications</Text>
-            <Text style={styles.cardText}>You have 0 new notifications</Text>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Recent Activity</Text>
-            <Text style={styles.cardText}>No recent activity to show</Text>
-          </View>
-        </View>
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#0000ff" />
+        ) : (
+          <TouchableOpacity style={styles.button} onPress={handleLogout}>
+            <Text style={styles.buttonText}>Logout</Text>
+          </TouchableOpacity>
+        )}
       </View>
-
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>Logout</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -60,59 +41,38 @@ const HomeScreen = ({ route, navigation }: Props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
-    padding: 20,
+    backgroundColor: '#f5f5f5',
   },
   content: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
   welcomeText: {
     fontSize: 24,
     marginBottom: 10,
-    color: '#333',
+    textAlign: 'center',
   },
   username: {
     fontWeight: 'bold',
+    color: '#007bff',
   },
-  description: {
+  subtitle: {
     fontSize: 16,
     color: '#666',
     marginBottom: 30,
+    textAlign: 'center',
   },
-  cardContainer: {
-    gap: 15,
-  },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
-  },
-  cardText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  logoutButton: {
-    backgroundColor: '#f5f5f5',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 15,
-    alignItems: 'center',
+  button: {
+    backgroundColor: '#007bff',
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 5,
     marginTop: 20,
   },
-  logoutButtonText: {
-    color: '#d9534f',
+  buttonText: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
